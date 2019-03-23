@@ -48,25 +48,25 @@ node {
 
 def imagePrune(containerName){
     try {
-        sh "docker image prune -f"
-        sh "docker stop $containerName"
+        sh "sudo docker image prune -f"
+        sh "sudo docker stop $containerName"
     } catch(error){}
 }
 
 def imageBuild(containerName){
-    sh "docker build -t $containerName --pull --no-cache ."
+    sh "sudo docker build -t $containerName --pull --no-cache ."
     echo "Image build complete"
 }
 
 def pushToImage(containerName,dockerUser, dockerPassword){
-    sh "docker login -u $dockerUser -p $dockerPassword"
+    sh "sudo docker login -u $dockerUser -p $dockerPassword"
     sh "docker tag $containerName $dockerUser/$containerName"
-    sh "docker push $dockerUser/$containerName"
+    sh "sudo docker push $dockerUser/$containerName"
     echo "Image push complete"
 }
 
 def runApp(containerName,dockerHubUser, httpPort){
-    sh "docker pull $dockerHubUser/$containerName"
-    sh "docker run -d --rm -p $httpPort:$httpPort --name $containerName $dockerHubUser/$containerName"
+    sh "sudo docker pull $dockerHubUser/$containerName"
+    sh "sudo docker run -d --rm -p $httpPort:$httpPort --name $containerName $dockerHubUser/$containerName"
     echo "Application started on port: ${httpPort} (http)"
 }
