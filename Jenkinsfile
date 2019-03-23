@@ -1,4 +1,5 @@
 def CONTAINER_NAME="jenkins"
+def CONTAINER_TAG="latest"
 def DOCKER_HUB_USER="niraj297"
 def HTTP_PORT="8090"
 
@@ -26,47 +27,47 @@ node {
         }
      }
 
-   /* stage("Image Prune"){
+    stage("Image Prune"){
         imagePrune(CONTAINER_NAME)
-    } */
+    }
 
     stage('Image Build'){
-        imageBuild(CONTAINER_NAME)
+        imageBuild(CONTAINER_NAME, CONTAINER_TAG)
     }
 
     stage('Push to Docker Registry'){
         withCredentials([usernamePassword(credentialsId: 'dockerHubAccount', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            pushToImage(CONTAINER_NAME,USERNAME, PASSWORD)
+            pushToImage(CONTAINER_NAME, CONTAINER_TAG, USERNAME, PASSWORD)
         }
     }
 
     stage('Run App'){
-        runApp(CONTAINER_NAME,DOCKER_HUB_USER, HTTP_PORT)
+        runApp(CONTAINER_NAME, CONTAINER_TAG, DOCKER_HUB_USER, HTTP_PORT)
     }
 
 }
 
-/* def imagePrune(containerName){
+def imagePrune(containerName){
     try {
-        sh "sudo docker image prune -f"
-        sh "sudo docker stop $containerName"
+        sh "docker image prune -f"
+        sh "docker stop $containerName"
     } catch(error){}
-} */
+}
 
-def imageBuild(containerName){
-    sh "docker build -t $containerName --pull --no-cache ."
+def imageBuild(containerName, tag){
+    sh "docker build -t $containerName:$tag  -t $containerName --pull --no-cache ."
     echo "Image build complete"
 }
 
-def pushToImage(containerName,dockerUser, dockerPassword){
+def pushToImage(containerName, tag, dockerUser, dockerPassword){
     sh "docker login -u $dockerUser -p $dockerPassword"
-    sh "docker tag $containerName $dockerUser/$containerName"
-    sh "docker push $dockerUser/$containerName"
+    sh "docker tag $containerName:$tag $dockerUser/$containerName:$tag"
+    sh "docker push $dockerUser/$containerName:$tag"
     echo "Image push complete"
 }
 
-def runApp(containerName,dockerHubUser, httpPort){
+def runApp(containerName, tag, dockerHubUser, httpPort){
     sh "docker pull $dockerHubUser/$containerName"
-    sh "docker run -d --rm -p $httpPort:$httpPort --name $containerName $dockerHubUser/$containerName"
+    sh "docker run -d --rm -p $httpPort:$httpPort --name $containerName $dockerHubUser/$containerName:$tag"
     echo "Application started on port: ${httpPort} (http)"
 }
